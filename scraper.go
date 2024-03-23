@@ -20,7 +20,8 @@ type item struct {
 }
 
 var (
-	quoteLimit int = 100
+	quoteLimit int    = 1000
+	tag        string = "love"
 	quote      string
 	author     string
 	book       string
@@ -104,7 +105,7 @@ func scrape(limit int) {
 	c := colly.NewCollector()
 
 	// Define the URL you want to scrape
-	url := "https://www.goodreads.com/quotes"
+	url := "https://www.goodreads.com/quotes/tag?utf8=%E2%9C%93&id=" + tag
 
 	c.OnHTML("div.quoteDetails", func(h *colly.HTMLElement) {
 		quote = cleanQuote(h.ChildText("div.quoteText"))
