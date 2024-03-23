@@ -13,15 +13,19 @@ import (
 )
 
 type item struct {
-	Quote  string `json:"quote"`
-	Author string `json:"author"`
-	Book   string `json:"book"`
-	Likes  int    `json:"likes"`
+	Quote    string   `json:"quote"`
+	Author   string   `json:"author"`
+	Book     string   `json:"book"`
+	Book_URL string   `json:"book_url"`
+	Likes    int      `json:"likes"`
+	Tags     []string `json:"tags"`
 }
 
 var (
 	quoteLimit int = 100
-	tag        string
+	book_url   string
+	search_tag string = "faith"
+	tags       []string
 	url        string = "https://www.goodreads.com/quotes?ref=nav_comm_quotes"
 	quote      string
 	author     string
@@ -82,6 +86,14 @@ func cleanLikes(text string) int {
 
 }
 
+func getBookUrl(slice_str []string) string {
+	re_select := regexp.MustCompile("[^0-9]+")
+	book_id_str := re_select.ReplaceAllString(strings.Join(slice_str, ""), "")
+	book_url := "https://www.goodreads.com/book/show/" + book_id_str
+
+	return (book_url)
+}
+
 func writeScrape(items []item, filename string, counter int, limit int) {
 	// if counter exceeds limit output
 	if counter >= limit {
@@ -106,24 +118,34 @@ func scrape(limit int) {
 	c := colly.NewCollector()
 
 	// Define the URL you want to scrape
-
-	if tag != "" {
-		url = "https://www.goodreads.com/quotes/tag?utf8=%E2%9C%93&id=" + tag
+	if search_tag != "" {
+		url = "https://www.goodreads.com/quotes/tag?utf8=%E2%9C%93&id=" + search_tag
 	}
 
 	c.OnHTML("div.quoteDetails", func(h *colly.HTMLElement) {
 		quote = cleanQuote(h.ChildText("div.quoteText"))
+
+		book_href := h.ChildAttrs("[class='authorOrTitle']", "href")
+		if len(book_href) > 0 {
+			book_url = getBookUrl(book_href)
+		} else {
+			book_url = ""
+		}
+
+		fmt.Println(book_href)
 		author, book = cleanAuthor(h.ChildText("span"))
 		like = cleanLikes(h.ChildText("[class=smallText]"))
-		// Tag scrape WIP
-		//fmt.Println(h.ChildText("[class='greyText smallText left']"))
+		tags = h.ChildTexts("[class='greyText smallText left'] > a")
+
+		//fmt.Print(tag_str)
 
 		i := item{
-			Quote:  quote,
-			Author: author,
-			Book:   book,
-			Likes:  like,
-			//Tags:   tags,
+			Quote:    quote,
+			Author:   author,
+			Book:     book,
+			Book_URL: book_url,
+			Likes:    like,
+			Tags:     tags,
 		}
 		// append quote struct to items slice
 		items = append(items, i)
