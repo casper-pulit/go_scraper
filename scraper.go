@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -22,16 +23,14 @@ type item struct {
 }
 
 var (
-	quoteLimit int = 100
-	book_url   string
-	search_tag string = "faith"
-	tags       []string
-	url        string = "https://www.goodreads.com/quotes?ref=nav_comm_quotes"
-	quote      string
-	author     string
-	book       string
-	like       int
-	counter    int
+	book_url string
+	tags     []string
+	url      string = "https://www.goodreads.com/quotes?ref=nav_comm_quotes"
+	quote    string
+	author   string
+	book     string
+	like     int
+	counter  int
 )
 
 func cleanQuote(text string) string {
@@ -110,7 +109,7 @@ func writeScrape(items []item, filename string, counter int, limit int) {
 	}
 }
 
-func scrape(limit int) {
+func scrape(limit int, search_tag string) {
 
 	// init slice of item structs
 	items := []item{}
@@ -132,12 +131,9 @@ func scrape(limit int) {
 			book_url = ""
 		}
 
-		fmt.Println(book_href)
 		author, book = cleanAuthor(h.ChildText("span"))
 		like = cleanLikes(h.ChildText("[class=smallText]"))
 		tags = h.ChildTexts("[class='greyText smallText left'] > a")
-
-		//fmt.Print(tag_str)
 
 		i := item{
 			Quote:    quote,
@@ -176,5 +172,8 @@ func scrape(limit int) {
 
 }
 func main() {
-	scrape(quoteLimit)
+	quote_limit := flag.Int("limit", 100, "Set number of quotes to return if available")
+	quote_tag := flag.String("tag", "", "Search for a specific tag. If empty will scrape most popular quotes.")
+	flag.Parse()
+	scrape(*quote_limit, *quote_tag)
 }
